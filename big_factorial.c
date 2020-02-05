@@ -19,34 +19,38 @@ char* readline();
 // 32b overflow
 void extraLongFactorials(int n) {
     uint64_t overflow_allowed = 0;
-    uint64_t overflow_check_mask = 0xffffffff00000000;
-    uint32_t enormous_int[10] = {1}; // God knows how big
-    int highest_32b_filled = 0;
+    uint32_t enormous_int[14] = {1}; // God knows how big
+    int highest_filled = 0;
 
     for(int factorial = 1; factorial<=n; factorial++)
     {
-        for(int enorm_idx = highest_32b_filled; enorm_idx >= 0; enorm_idx--)
+        for(int enorm_idx = highest_filled; enorm_idx >= 0; enorm_idx--)
         {
             overflow_allowed = enormous_int[enorm_idx];
             overflow_allowed *= factorial;
-            if(overflow_allowed & overflow_check_mask)
+            if(overflow_allowed > 100000000)
             {
-                if(enorm_idx == highest_32b_filled)
+                if(enorm_idx == highest_filled)
                 {
-                    highest_32b_filled++;
+                    highest_filled++;
                 }
             }
-            enormous_int[enorm_idx] = (uint32_t)overflow_allowed;
-            enormous_int[enorm_idx+1] += (uint32_t)(overflow_allowed >> 32);
+            enormous_int[enorm_idx] = (uint32_t)overflow_allowed%100000000;
+            enormous_int[enorm_idx+1] += overflow_allowed/100000000;
         }
     }
-    // ok, so now the number is stored correctly, but how will I print it as a decimal number?
-    printf("%ld\n", ((uint64_t)enormous_int[1] << 32) + enormous_int[0]);
+
+    printf("%u", enormous_int[highest_filled]);
+    for(int enorm_idx = highest_filled-1; enorm_idx >= 0; enorm_idx--)
+    {
+        printf("%08u", enormous_int[enorm_idx]);
+    }
+    printf("\n");
 }
 
 int main()
 {
-    extraLongFactorials(14);
+    extraLongFactorials(60);
 
     return 0;
 }
@@ -82,3 +86,6 @@ char* readline() {
 
     return data;
 }
+
+// 11962222086548019456196316149565771506438423703040
+// 119622220865480194561963161495657715064383733760000000000
