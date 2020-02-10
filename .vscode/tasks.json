@@ -2,32 +2,36 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build: big facker",
+            "label": "build: big_factorial",
             "type": "shell",
             "command": "mkdir -p build; cd build; cmake -DCMAKE_BUILD_TYPE=Debug ..; make",
             "options": {
-                "cwd": "${workspaceFolder}"
+                "cwd": "${workspaceFolder}/big_factorial"
             },
-            "problemMatcher": [
-                "$gcc"
-            ],
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": "absolute"
+
+            },
             "group": {
                 "kind": "build",
                 "isDefault": true
             }
         },
         {
+            "label": "build: euler_245",
             "type": "shell",
-            "label": "gcc build active file",
-            "command": "/usr/bin/gcc",
-            "args": [
-                "-g",
-                "${file}",
-                "-o",
-                "${fileDirname}/${fileBasenameNoExtension}"
-            ],
+            "command": "mkdir -p build; cd build; cmake -DCMAKE_BUILD_TYPE=Debug ..; make",
             "options": {
-                "cwd": "/usr/bin"
+                "cwd": "${workspaceFolder}/euler_245"
+            },
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": "absolute"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
             }
         }
     ]

@@ -7,13 +7,13 @@
         
 
         {
-            "name": "launch: debug facker",
+            "name": "launch: debug big_factorial",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/big_facker",
+            "program": "${workspaceFolder}/big_factorial/build/big_factorial",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/build",
+            "cwd": "${workspaceFolder}/big_factorial/build",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
@@ -24,7 +24,29 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "build: big facker",
+            "preLaunchTask": "build: big_factorial",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+
+        {
+            "name": "launch: debug euler_245",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/euler_245/build/euler_245",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/euler_245/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build: euler_245",
             "miDebuggerPath": "/usr/bin/gdb"
         }
     ]
