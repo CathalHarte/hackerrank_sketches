@@ -13,40 +13,74 @@ struct primeList {
 
 
 // A second consideration could be made to making a fraction-type struct
-void reduce_fraction(int *numerator, int *denominator, struct primeList *p_list);
+// if reduction occurred, return 1, otherwise return 0
+int reduce_fraction(int *numerator, int *denominator, struct primeList *p_list);
 
 struct primeList prime_list;
 
 void create_prime_list(struct primeList* p_list, int max_num);
 
+
+// The problem statement is to find all numbers between 1 and N with the reduced coresilience fraction having a numerator of 1
+// Sum the numbers n between 1 and N with this property
+
+// Limit is N = 10^11
+// Be really careful here, the sum could run over, or other computations that bring about the possibilty of N^2, and 10^22 doesn't
+// fit into 64 bits
 int main() {
 
     /* Enter your code here. Read input from STDIN. Print output to STDOUT */
     // Who cares?
-    int num = 8;
-    int denom = 12;
+    int N = 5;
+    int reducible_num, reducible_denom;
 
-    create_prime_list(&prime_list, 300);
+    create_prime_list(&prime_list, N);
 
-    for( int i = 0; i<prime_list.max_populated; i++)
+    // What I mean by a static denom is one that shouldn't be passed by location to the 
+    // reduce_fraction function
+    int sum_of_set = 0;
+    for(int static_denom = 2; static_denom<=N; static_denom++)
     {
-        printf("%d, ", prime_list.prime[i]);
+        int num_indivisible_fractions = 0;
+        for(int static_num = 1; static_num < static_denom; static_num++)
+        {
+            reducible_num = static_num;
+            reducible_denom = static_denom;
+            if(!reduce_fraction(&reducible_num, &reducible_denom, &prime_list))
+            {
+                num_indivisible_fractions++;
+            }
+        }
+        reducible_num = static_denom - num_indivisible_fractions;
+        reducible_denom = static_denom-1;
+        reduce_fraction(&reducible_num, &reducible_denom, &prime_list);
+        if(reducible_num == 1)
+        {
+            sum_of_set += static_denom;
+        }
     }
-    reduce_fraction(&num,&denom, &prime_list);
-    printf("%d/%d\n", num, denom);    
+
+    printf("%d, \n", sum_of_set);
+    // for( int i = 0; i<prime_list.max_populated; i++)
+    // {
+    //     printf("%d, ", prime_list.prime[i]);
+    // }
+    // reduce_fraction(&num,&denom, &prime_list);
+    // printf("%d/%d\n", num, denom);    
     return 0;
 }
 
-void reduce_fraction(int *numerator, int *denominator, struct primeList *p_list)
+int reduce_fraction(int *numerator, int *denominator, struct primeList *p_list)
 {
 
+    int fraction_reduced = 0;
     int max_prime_idx =  p_list->max_populated;
     for(int prime_idx = 0; prime_idx < max_prime_idx; prime_idx++)
     {
         int divisor = p_list->prime[prime_idx];
 
         // Start with checking the numerator, it is guaranteed to be smaller, so we save time
-        if( divisor*divisor > *numerator)
+        if( divisor*divisor > *denominator)
         {
             break; // it's game over
         }
@@ -55,6 +89,7 @@ void reduce_fraction(int *numerator, int *denominator, struct primeList *p_list)
             if(!(*denominator % divisor)) // and so can the denominator be
             {
                 // then we can simplify the fraction
+                fraction_reduced = 1;
                 *numerator   /= divisor;
                 *denominator /= divisor;
 
@@ -65,6 +100,7 @@ void reduce_fraction(int *numerator, int *denominator, struct primeList *p_list)
             }
         }
     }
+    return fraction_reduced;
 }
 
 void create_prime_list(struct primeList *p_list, int max_num)
