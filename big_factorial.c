@@ -24,6 +24,10 @@ void extraLongFactorials(int n) {
 
     for(int factorial = 1; factorial<=n; factorial++)
     {
+        if (factorial == 45)
+        {
+            printf("problem loop\n");
+        }
         for(int enorm_idx = highest_filled; enorm_idx >= 0; enorm_idx--)
         {
             overflow_allowed = enormous_int[enorm_idx];
@@ -35,7 +39,12 @@ void extraLongFactorials(int n) {
                     highest_filled++;
                 }
             }
-            enormous_int[enorm_idx] = (uint32_t)overflow_allowed%100000000;
+
+            if (factorial == 45)
+            {
+                printf("%d\%100000000 = %d\n", overflow_allowed, overflow_allowed%100000000);
+            }
+            enormous_int[enorm_idx] = (uint32_t)(overflow_allowed%100000000);
             enormous_int[enorm_idx+1] += overflow_allowed/100000000;
         }
     }
@@ -46,11 +55,12 @@ void extraLongFactorials(int n) {
         printf("%08u", enormous_int[enorm_idx]);
     }
     printf("\n");
+    printf("\n");
 }
 
 int main()
 {
-    extraLongFactorials(60);
+    extraLongFactorials(45);
 
     return 0;
 }
