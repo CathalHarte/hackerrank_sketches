@@ -42,12 +42,17 @@ struct primeList {
 
 // A second consideration could be made to making a fraction-type struct
 // if reduction occurred, return 1, otherwise return 0
-int reduce_fraction(int *numerator, int *denominator, struct primeList *p_list);
-
-void create_prime_list(struct primeList* p_list, int max_num);
+int reduce_fraction(int *numerator, int *denominator);
 
 // Self explanatory
-int is_prime(int candidate, struct primeList* p_list);
+void init_prime_list(int max_num);
+
+// Self explanatory
+int is_prime(int candidate);
+
+// Calculate the Euler totient of a number - the number of fractions of a denominator
+// which are resilient
+int calc_euler_totient(int denom);
 
 /*******************************************************************************
 * Data
@@ -61,35 +66,25 @@ struct primeList prime_list;
 
 int main() {
 
-    /* Enter your code here. Read input from STDIN. Print output to STDOUT */
-    // Who cares?
     int N;
-    int reducible_num, reducible_denom;
+    int reducible_num, reducible_denom, euler_totient;
 
     scanf("%d",&N);
-    create_prime_list(&prime_list, N);
+    init_prime_list(N);
 
     // What I mean by a static denom is one that shouldn't be passed by location to the 
     // reduce_fraction function
     int sum_of_set = 0;
     for(int static_denom = 2; static_denom<=N; static_denom++)
     {
-        int num_indivisible_fractions = 0;
-        for(int static_num = 1; static_num < static_denom; static_num++)
-        {
-            reducible_num = static_num;
-            reducible_denom = static_denom;
-            if(!reduce_fraction(&reducible_num, &reducible_denom, &prime_list))
-            {
-                num_indivisible_fractions++;
-            }
-        }
-        reducible_num = static_denom - num_indivisible_fractions;
+        euler_totient = calc_euler_totient(static_denom);
+        
+        reducible_num = static_denom - euler_totient;
         reducible_denom = static_denom-1;
-        reduce_fraction(&reducible_num, &reducible_denom, &prime_list);
+        reduce_fraction(&reducible_num, &reducible_denom);
         if(reducible_num == 1)
         {
-            if(!is_prime(static_denom, &prime_list))
+            if(!is_prime(static_denom))
             {
                 printf("nonprime in set!\n");
             }
@@ -101,14 +96,14 @@ int main() {
     return 0;
 }
 
-int reduce_fraction(int *numerator, int *denominator, struct primeList *p_list)
+int reduce_fraction(int *numerator, int *denominator)
 {
 
     int fraction_reduced = 0;
-    int max_prime_idx =  p_list->max_populated;
+    int max_prime_idx =  prime_list.max_populated;
     for(int prime_idx = 0; prime_idx < max_prime_idx; prime_idx++)
     {
-        int divisor = p_list->prime[prime_idx];
+        int divisor = prime_list.prime[prime_idx];
 
         // Start with checking the numerator, it is guaranteed to be smaller, so we save time
         if( divisor*divisor > *denominator)
@@ -134,17 +129,17 @@ int reduce_fraction(int *numerator, int *denominator, struct primeList *p_list)
     return fraction_reduced;
 }
 
-void create_prime_list(struct primeList *p_list, int max_num)
+void init_prime_list(int max_num)
 {
-    p_list->prime[0] = 2; // 1 is not technically a prime
-    p_list->max_populated = 1;
+    prime_list.prime[0] = 2; // 1 is not technically a prime
+    prime_list.max_populated = 1;
     for(int candidate = 3; candidate<=max_num; candidate++)
     {
         int is_divisible = 0;
-        int max_prime_idx =  p_list->max_populated;
+        int max_prime_idx =  prime_list.max_populated;
         for(int prime_idx = 0; prime_idx < max_prime_idx; prime_idx++)
         {
-            int divisor = p_list->prime[prime_idx];
+            int divisor = prime_list.prime[prime_idx];
             if (divisor*divisor > candidate)
             {
                 break;
@@ -157,20 +152,20 @@ void create_prime_list(struct primeList *p_list, int max_num)
         }
         if(!is_divisible)
         {
-            p_list->prime[max_prime_idx] = candidate;
-            p_list->max_populated = max_prime_idx+1;
+            prime_list.prime[max_prime_idx] = candidate;
+            prime_list.max_populated = max_prime_idx+1;
         }
     }
 }
 
-int is_prime(int candidate, struct primeList* p_list)
+int is_prime(int candidate)
 {
     int is_prime = 0;
     int prime;
-    int max_prime_idx =  p_list->max_populated;
+    int max_prime_idx =  prime_list.max_populated;
     for(int prime_idx = 0; prime_idx<max_prime_idx; prime_idx++)
     {
-        prime = p_list->prime[prime_idx];
+        prime = prime_list.prime[prime_idx];
         if (candidate == prime)
         {
             is_prime = 1;
@@ -181,4 +176,21 @@ int is_prime(int candidate, struct primeList* p_list)
             break;
         }
     }
+}
+
+int calc_euler_totient(int denom)
+{
+    static int reducible_num, reducible_denom;
+    int euler_totient = 0;
+    for(int num = 1; num < denom; num++)
+    {
+        // the reduce_fraction function acts directly on the address
+        reducible_num = num;
+        reducible_denom = denom;
+        if(!reduce_fraction(&reducible_num, &reducible_denom))
+        {
+            euler_totient++;
+        }
+    }
+    return euler_totient;
 }
