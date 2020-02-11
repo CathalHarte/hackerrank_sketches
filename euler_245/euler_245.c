@@ -1,7 +1,32 @@
+/******************************************************************************/
+/*!
+ * @file    euler_245.c
+ * @brief   The problem statement is to find all numbers between 1 and N with 
+ *          the reduced coresilience fraction having a numerator of 1. 
+ *          Sum the numbers n between 1 and N with this property.
+ *          
+ *          Limit is N = 10^11
+ *          Be really careful here, the sum could run over, or other 
+ *          computations that bring about the possibilty of N^2, and 10^22 
+ *          doesn't fit into 64 bits
+ * 
+ * @author  Cathal Harte
+ *
+ * @copyright   
+ */
+
+/*******************************************************************************
+* Includes
+******************************************************************************/
+
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+
+/*******************************************************************************
+* Definitions and types
+*******************************************************************************/
 
 // if the fraction can be reduced, do so recursively
 // Don't waste space here, make it known that the values provided are
@@ -11,29 +36,37 @@ struct primeList {
     int prime[10000000];
 } primeList;
 
+/*******************************************************************************
+* Internal function prototypes
+*******************************************************************************/
 
 // A second consideration could be made to making a fraction-type struct
 // if reduction occurred, return 1, otherwise return 0
 int reduce_fraction(int *numerator, int *denominator, struct primeList *p_list);
 
-struct primeList prime_list;
-
 void create_prime_list(struct primeList* p_list, int max_num);
 
+// Self explanatory
+int is_prime(int candidate, struct primeList* p_list);
 
-// The problem statement is to find all numbers between 1 and N with the reduced coresilience fraction having a numerator of 1
-// Sum the numbers n between 1 and N with this property
+/*******************************************************************************
+* Data
+*******************************************************************************/
 
-// Limit is N = 10^11
-// Be really careful here, the sum could run over, or other computations that bring about the possibilty of N^2, and 10^22 doesn't
-// fit into 64 bits
+struct primeList prime_list;
+
+/*******************************************************************************
+* Functions
+*******************************************************************************/
+
 int main() {
 
     /* Enter your code here. Read input from STDIN. Print output to STDOUT */
     // Who cares?
-    int N = 5;
+    int N;
     int reducible_num, reducible_denom;
 
+    scanf("%d",&N);
     create_prime_list(&prime_list, N);
 
     // What I mean by a static denom is one that shouldn't be passed by location to the 
@@ -56,17 +89,15 @@ int main() {
         reduce_fraction(&reducible_num, &reducible_denom, &prime_list);
         if(reducible_num == 1)
         {
+            if(!is_prime(static_denom, &prime_list))
+            {
+                printf("nonprime in set!\n");
+            }
             sum_of_set += static_denom;
         }
     }
 
-    printf("%d, \n", sum_of_set);
-    // for( int i = 0; i<prime_list.max_populated; i++)
-    // {
-    //     printf("%d, ", prime_list.prime[i]);
-    // }
-    // reduce_fraction(&num,&denom, &prime_list);
-    // printf("%d/%d\n", num, denom);    
+    printf("%d\n", sum_of_set); 
     return 0;
 }
 
@@ -128,6 +159,26 @@ void create_prime_list(struct primeList *p_list, int max_num)
         {
             p_list->prime[max_prime_idx] = candidate;
             p_list->max_populated = max_prime_idx+1;
+        }
+    }
+}
+
+int is_prime(int candidate, struct primeList* p_list)
+{
+    int is_prime = 0;
+    int prime;
+    int max_prime_idx =  p_list->max_populated;
+    for(int prime_idx = 0; prime_idx<max_prime_idx; prime_idx++)
+    {
+        prime = p_list->prime[prime_idx];
+        if (candidate == prime)
+        {
+            is_prime = 1;
+            break;
+        }
+        else if (candidate > prime)
+        {
+            break;
         }
     }
 }
