@@ -74,25 +74,25 @@ int main() {
 
     // What I mean by a static denom is one that shouldn't be passed by location to the 
     // reduce_fraction function
-    int sum_of_set = 0;
-    for(int static_denom = 2; static_denom<=N; static_denom++)
-    {
-        euler_totient = calc_euler_totient(static_denom);
-        
-        reducible_num = static_denom - euler_totient;
-        reducible_denom = static_denom-1;
-        reduce_fraction(&reducible_num, &reducible_denom);
-        if(reducible_num == 1)
-        {
-            if(!is_prime(static_denom))
-            {
-                printf("nonprime in set!\n");
-            }
-            sum_of_set += static_denom;
-        }
-    }
+    // int sum_of_set = 0;
+    // for(int static_denom = 2; static_denom<=N; static_denom++)
+    // {
+    //     euler_totient = calc_euler_totient(static_denom);
+    //     
+    //     reducible_num = static_denom - euler_totient;
+    //     reducible_denom = static_denom-1;
+    //     reduce_fraction(&reducible_num, &reducible_denom);
+    //     if(reducible_num == 1)
+    //     {
+    //         if(!is_prime(static_denom))
+    //         {
+    //             printf("nonprime in set!\n");
+    //         }
+    //         sum_of_set += static_denom;
+    //     }
+    // }
 
-    printf("%d\n", sum_of_set); 
+    // printf("%d\n", sum_of_set); 
     return 0;
 }
 
