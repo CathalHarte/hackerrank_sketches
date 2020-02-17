@@ -11,29 +11,41 @@
 char* readline();
 char** split_string(char*);
 
-long int tally[10000000];
+uint64_t tally[10000000];
 
 // Complete the arrayManipulation function below.
 
 // Why on earth are they called queries? Isn't that fucking stupid?
-long arrayManipulation(int n, int queries_rows, int queries_columns, int** queries) {
+uint64_t arrayManipulation(int n, int queries_rows, int queries_columns, uint64_t** queries) {
 
+    uint64_t max = 0;
+    uint64_t curr;
+    int start, end;
+    uint64_t *start_ptr, *end_ptr;
     for(int query_row = 0; query_row<queries_rows; query_row++)
     {
-        for(int tally_idx = queries[query_row][0]-1;tally_idx < queries[query_row][1];tally_idx++) // idx starts at one in problem statement
+        start = queries[query_row][0]-1;
+        start_ptr = &tally[start];
+        end = queries[query_row][1];
+        end_ptr = &tally[end];
+        for(;start_ptr < end_ptr;start_ptr++) // idx starts at one in problem statement
         {
-            tally[tally_idx] += queries[query_row][2];
+            curr = *start_ptr + (uint64_t)queries[query_row][2];
+            *start_ptr = curr;
+            if( curr > max)
+            {
+                max = curr;
+            }
         }
     }
 
-    int max = tally[0];
-    for(int tally_idx = 1; tally_idx < n; tally_idx++)
-    {   
-        if (max < tally[tally_idx])
-        {
-            max = tally[tally_idx];
-        }
-    }
+    // for(int tally_idx = 1; tally_idx < n; tally_idx++)
+    // {   
+    //     if (max < tally[tally_idx])
+    //     {
+    //         max = tally[tally_idx];
+    //     }
+    // }
     return max;
     // 7515267971
 }
@@ -41,40 +53,44 @@ long arrayManipulation(int n, int queries_rows, int queries_columns, int** queri
 int main()
 {
     FILE *fp = NULL;
+    int n; // array length
+    int m; // number of operations
+
     /* 1. Open file for Reading */                                                 
-    if (NULL == (fp = fopen("file.txt","r")))                                   
+    if (NULL == (fp = fopen("../failing_test_case.tsv","r")))                                   
     {                                                                           
         perror("Error while opening the file.\n");                              
         exit(EXIT_FAILURE);                                                     
     }
     
-    
-    int n = 11; // array length
-    int m =  4; // number of operations
+    if (EOF == fscanf(fp, "%d %d", &n, &m))                                       
+    { 
+        printf("The file doesn't contain the necessary first line of information\n");
+    }
 
-
-
-            // columns rows
-    int test_array[4][3] = {{2, 6, 8},{3, 5, 7},{1, 8, 1},{5, 9, 15}};
+    uint64_t row[3];
 
     int queries_rows = m;
     int queries_columns = 3;
 
-    int** queries = malloc(m * sizeof(int*));
+    uint64_t** queries = malloc(m * sizeof(uint64_t*));
 
     // the technique used to achieve a 2D array here is nuts, so I'm going to see if I can learn it
     for (int i = 0; i < m; i++) {
-        *(queries + i) = malloc(3 * (sizeof(int)));
+        fscanf(fp, "%lu %lu %lu", row, row+1, row+2);
+        *(queries + i) = malloc(3 * (sizeof(uint64_t)));
         for (int j = 0; j < 3; j++) {
-            *(*(queries + i) + j) = test_array[i][j];
+            *(*(queries + i) + j) = row[j];
+        }
+        if(i == m-1)
+        {
+            printf("%lu %lu %lu\n", *row, *(row+1), *(row+2));
         }
     }
 
-    char** queries_item_temp = split_string(readline());
+    long result = arrayManipulation(n, m, 3, queries);
 
-    long result = arrayManipulation(n, 4, 3, queries);
-
-    printf("%ld\n", result);
+    printf("%lu\n", result);
 
 
     return 0;
