@@ -8,6 +8,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <time.h>
+
+clock_t start_time, end_time;
+double cpu_time_used;
+     
 char* readline();
 char** split_string(char*);
 
@@ -22,30 +27,32 @@ uint64_t arrayManipulation(int n, int queries_rows, int queries_columns, uint64_
     uint64_t curr;
     int start, end;
     uint64_t *start_ptr, *end_ptr;
+
+    start_time = clock();
+
     for(int query_row = 0; query_row<queries_rows; query_row++)
     {
         start = queries[query_row][0]-1;
         start_ptr = &tally[start];
         end = queries[query_row][1];
         end_ptr = &tally[end];
-        for(;start_ptr < end_ptr;start_ptr++) // idx starts at one in problem statement
+        for(;start_ptr < end_ptr;) // idx starts at one in problem statement
         {
-            curr = *start_ptr + (uint64_t)queries[query_row][2];
-            *start_ptr = curr;
-            if( curr > max)
-            {
-                max = curr;
-            }
+            *start_ptr++ = *start_ptr + queries[query_row][2];
         }
     }
 
-    // for(int tally_idx = 1; tally_idx < n; tally_idx++)
-    // {   
-    //     if (max < tally[tally_idx])
-    //     {
-    //         max = tally[tally_idx];
-    //     }
-    // }
+    end_time = clock();
+
+    for(int tally_idx = 1; tally_idx < n; tally_idx++)
+    {   
+        if (max < tally[tally_idx])
+        {
+            max = tally[tally_idx];
+        }
+    }
+
+
     return max;
     // 7515267971
 }
@@ -73,6 +80,7 @@ int main()
     int queries_rows = m;
     int queries_columns = 3;
 
+
     uint64_t** queries = malloc(m * sizeof(uint64_t*));
 
     // the technique used to achieve a 2D array here is nuts, so I'm going to see if I can learn it
@@ -89,8 +97,10 @@ int main()
     }
 
     long result = arrayManipulation(n, m, 3, queries);
-
-    printf("%lu\n", result);
+    
+    cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+    
+    printf("%lu %lf\n", result, cpu_time_used);
 
 
     return 0;
