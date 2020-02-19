@@ -20,25 +20,28 @@ uint64_t tally[10000000];
 
 // Complete the arrayManipulation function below.
 
-// Why on earth are they called queries? Isn't that fucking stupid?
-uint64_t arrayManipulation(int n, int queries_rows, int queries_columns, uint64_t** queries) {
-
+// The operations matrix is an m by 3 matrix
+uint64_t arrayManipulation(int n, int operations_rows, int operations_columns, int** operations) 
+{
     uint64_t max = 0;
-    uint64_t curr;
-    int start, end;
+    uint64_t addition;
     uint64_t *start_ptr, *end_ptr;
 
     start_time = clock();
+    int ** last_operation_row = &(operations[operations_rows]);
 
-    for(int query_row = 0; query_row<queries_rows; query_row++)
+    int operation_idx = 0;
+    for(; operations<last_operation_row; operations++)
     {
-        start = queries[query_row][0]-1;
-        start_ptr = &tally[start];
-        end = queries[query_row][1];
-        end_ptr = &tally[end];
+        operation_idx++;
+        start_ptr = tally + operations[0][0]-1;
+        end_ptr = tally + operations[0][1];
+        addition = operations[0][2];
         for(;start_ptr < end_ptr;) // idx starts at one in problem statement
+        // We use idx zero, so although the operation is from say 1 to 5 inclusive, we
+        // add up idxs 0 to 4, hence (< end_ptr)
         {
-            *start_ptr++ = *start_ptr + queries[query_row][2];
+            *start_ptr++ += addition;
         }
     }
 
@@ -52,9 +55,9 @@ uint64_t arrayManipulation(int n, int queries_rows, int queries_columns, uint64_
         }
     }
 
-
     return max;
     // 7515267971
+    // 2510535321
 }
 
 int main()
@@ -64,7 +67,7 @@ int main()
     int m; // number of operations
 
     /* 1. Open file for Reading */                                                 
-    if (NULL == (fp = fopen("../failing_test_case.tsv","r")))                                   
+    if (NULL == (fp = fopen("../failing_test_case_2.tsv","r")))                                   
     {                                                                           
         perror("Error while opening the file.\n");                              
         exit(EXIT_FAILURE);                                                     
@@ -77,18 +80,18 @@ int main()
 
     uint64_t row[3];
 
-    int queries_rows = m;
-    int queries_columns = 3;
+    int operations_rows = m;
+    int operations_columns = 3;
 
 
-    uint64_t** queries = malloc(m * sizeof(uint64_t*));
+    int** operations = malloc(m * sizeof(int*));
 
     // the technique used to achieve a 2D array here is nuts, so I'm going to see if I can learn it
     for (int i = 0; i < m; i++) {
         fscanf(fp, "%lu %lu %lu", row, row+1, row+2);
-        *(queries + i) = malloc(3 * (sizeof(uint64_t)));
+        *(operations + i) = malloc(3 * (sizeof(int)));
         for (int j = 0; j < 3; j++) {
-            *(*(queries + i) + j) = row[j];
+            *(*(operations + i) + j) = row[j];
         }
         if(i == m-1)
         {
@@ -96,7 +99,7 @@ int main()
         }
     }
 
-    long result = arrayManipulation(n, m, 3, queries);
+    long result = arrayManipulation(n, m, 3, operations);
     
     cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
     
