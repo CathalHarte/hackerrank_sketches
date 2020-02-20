@@ -1,3 +1,18 @@
+/******************************************************************************/
+/*!
+ * @file    array_manip.c
+ * @brief   The problem statement is to quickly add up a list of array[n:m] += val,
+ *          then to find the max
+ * 
+ * @author  Cathal Harte
+ *
+ * @copyright   
+ */
+
+/*******************************************************************************
+* Includes
+******************************************************************************/
+
 #include <assert.h>
 #include <limits.h>
 #include <math.h>
@@ -10,15 +25,11 @@
 
 #include <time.h>
 
-#define TEN_MILLION     10000000
-clock_t start_time, end_time;
-double cpu_time_used;
-     
-char* readline();
-char** split_string(char*);
+/*******************************************************************************
+* Definitions and types
+*******************************************************************************/
 
-uint64_t tally[TEN_MILLION];
-uint64_t tally_2[TEN_MILLION];
+#define TEN_MILLION     10000000
 
 typedef struct linked_range
 {
@@ -26,8 +37,119 @@ typedef struct linked_range
     uint64_t upprange; // upprange is the location of the first index in the array which is not "val"
 } linked_range_t;
 
+/*******************************************************************************
+* Internal function prototypes
+*******************************************************************************/
+
+uint64_t arrayManipulation  (int n, int operations_rows, int operations_columns, int** operations);
+uint64_t arrayManipulationLL(int n, int operations_rows, int operations_columns, int** operations); 
+
+void init_linked_range_array(void);
+void convert_linked_array_to_tally(void);
+void convert_tally_to_linked_array(uint64_t *tally_ptr, linked_range_t *l_range);
+
+void print_cpu_time_used(void);
+
+char* readline();
+char** split_string(char*);
+
+/*******************************************************************************
+* Data
+*******************************************************************************/
+
+clock_t start_time, end_time;
+double cpu_time_used;
+
+uint64_t tally[TEN_MILLION];
+uint64_t tally_2[TEN_MILLION];
+
 linked_range_t linked_range_array[TEN_MILLION];
 linked_range_t linked_range_array_2[TEN_MILLION];
+
+/*******************************************************************************
+* Functions
+*******************************************************************************/
+
+int main()
+{
+    FILE *fp = NULL;
+    int n; // array length
+    int m; // number of operations
+
+    /* 1. Open file for Reading */                                                 
+    if (NULL == (fp = fopen("../failing_test_case.tsv","r")))                                   
+    {                                                                           
+        perror("Error while opening the file.\n");                              
+        exit(EXIT_FAILURE);                                                     
+    }
+    
+    if (EOF == fscanf(fp, "%d %d", &n, &m))                                       
+    { 
+        printf("The file doesn't contain the necessary first line of information\n");
+    }
+
+    uint64_t row[3];
+
+    int operations_rows = m;
+    int operations_columns = 3;
+
+
+    int** operations = malloc(m * sizeof(int*));
+
+    // the technique used to achieve a 2D array here is nuts, so I'm going to see if I can learn it
+    for (int i = 0; i < m; i++) 
+    {
+        fscanf(fp, "%lu %lu %lu", row, row+1, row+2);
+        *(operations + i) = malloc(3 * (sizeof(int)));
+        for (int j = 0; j < 3; j++) 
+        {
+            *(*(operations + i) + j) = row[j];
+        }
+        if(i == m-1)
+        {
+            printf("%lu %lu %lu\n", *row, *(row+1), *(row+2));
+        }
+    }
+
+    init_linked_range_array();
+    long result = arrayManipulationLL(n, m, 3, operations);
+    printf("Max value, according to the linked range algo: %ld\n", result);
+    print_cpu_time_used();
+    result = arrayManipulation(n, m, 3, operations);
+    printf("Max value, according to the simple algo: %ld\n", result);
+    print_cpu_time_used();
+
+
+    convert_linked_array_to_tally();
+    convert_tally_to_linked_array(tally, linked_range_array_2);
+
+    // compare tallies
+    int matches = 0;
+    int ranges = 0;
+    int l_range_idx = 0;
+    for(l_range_idx = 0; l_range_idx < n;)
+    {
+        ranges++;
+        if(linked_range_array[l_range_idx].upprange != linked_range_array_2[l_range_idx].upprange)
+        {
+            printf("Ranges are incorrect from idx %d, cannot continue making comparisons\n", l_range_idx);
+            break;
+        }
+        if(linked_range_array[l_range_idx].val      == linked_range_array_2[l_range_idx].val)
+        {
+            matches++;
+        }
+        else 
+        {
+            printf("Fail: %lu vs %lu\n", linked_range_array[l_range_idx].val, linked_range_array_2[l_range_idx].val);
+        }
+        l_range_idx = linked_range_array[l_range_idx].upprange;
+    }
+    printf("matches: %d/%d\n", matches, ranges);
+
+    return 0;
+}
+
 
 // Complete the arrayManipulation function below.
 
@@ -71,10 +193,13 @@ uint64_t arrayManipulation(int n, int operations_rows, int operations_columns, i
     // 2510535321
 }
 
+
 void init_linked_range_array(void)
 {
     linked_range_array[0].upprange = TEN_MILLION;
 }
+
+
 // The operations matrix is an m by 3 matrix
 // This is the linkedList style of solution
 //      It can save on huge number of computations by having a data structure that defines ranges of values
@@ -181,6 +306,7 @@ uint64_t arrayManipulationLL(int n, int operations_rows, int operations_columns,
     // 144, for test case 4
 }
 
+
 void convert_linked_array_to_tally(void)
 {
     int linked_range_idx = 0;
@@ -195,6 +321,7 @@ void convert_linked_array_to_tally(void)
         linked_range_idx = max_fill;
     }
 }
+
 
 void convert_tally_to_linked_array(uint64_t *tally_ptr, linked_range_t *l_range)
 {
@@ -220,113 +347,50 @@ void convert_tally_to_linked_array(uint64_t *tally_ptr, linked_range_t *l_range)
     l_range[l_range_idx].upprange = tally_idx;
 }
 
+
 void print_cpu_time_used(void)
 {
     cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;   
     printf("CPU time used: %lf\n", cpu_time_used);
 }
 
-int main()
+
+char* readline() 
 {
-    FILE *fp = NULL;
-    int n; // array length
-    int m; // number of operations
-
-    /* 1. Open file for Reading */                                                 
-    if (NULL == (fp = fopen("../failing_test_case.tsv","r")))                                   
-    {                                                                           
-        perror("Error while opening the file.\n");                              
-        exit(EXIT_FAILURE);                                                     
-    }
-    
-    if (EOF == fscanf(fp, "%d %d", &n, &m))                                       
-    { 
-        printf("The file doesn't contain the necessary first line of information\n");
-    }
-
-    uint64_t row[3];
-
-    int operations_rows = m;
-    int operations_columns = 3;
-
-
-    int** operations = malloc(m * sizeof(int*));
-
-    // the technique used to achieve a 2D array here is nuts, so I'm going to see if I can learn it
-    for (int i = 0; i < m; i++) {
-        fscanf(fp, "%lu %lu %lu", row, row+1, row+2);
-        *(operations + i) = malloc(3 * (sizeof(int)));
-        for (int j = 0; j < 3; j++) {
-            *(*(operations + i) + j) = row[j];
-        }
-        if(i == m-1)
-        {
-            printf("%lu %lu %lu\n", *row, *(row+1), *(row+2));
-        }
-    }
-
-    init_linked_range_array();
-    long result = arrayManipulationLL(n, m, 3, operations);
-    printf("Max value, according to the linked range algo: %ld\n", result);
-    print_cpu_time_used();
-    result = arrayManipulation(n, m, 3, operations);
-    printf("Max value, according to the simple algo: %ld\n", result);
-    print_cpu_time_used();
-
-
-    convert_linked_array_to_tally();
-    convert_tally_to_linked_array(tally, linked_range_array_2);
-
-    // compare tallies
-    int matches = 0;
-    int ranges = 0;
-    int l_range_idx = 0;
-    for(l_range_idx = 0; l_range_idx < n;)
-    {
-        ranges++;
-        if(linked_range_array[l_range_idx].upprange != linked_range_array_2[l_range_idx].upprange)
-        {
-            printf("Ranges are incorrect from idx %d, cannot continue making comparisons\n", l_range_idx);
-            break;
-        }
-        if(linked_range_array[l_range_idx].val      == linked_range_array_2[l_range_idx].val)
-        {
-            matches++;
-        }
-        else {
-            printf("Fail: %lu vs %lu\n", linked_range_array[l_range_idx].val, linked_range_array_2[l_range_idx].val);
-        }
-        l_range_idx = linked_range_array[l_range_idx].upprange;
-    }
-    printf("matches: %d/%d\n", matches, ranges);
-
-    return 0;
-}
-
-char* readline() {
     size_t alloc_length = 1024;
     size_t data_length = 0;
     char* data = malloc(alloc_length);
 
-    while (true) {
+    while (true) 
+    {
         char* cursor = data + data_length;
         char* line = fgets(cursor, alloc_length - data_length, stdin);
 
-        if (!line) { break; }
+        if (!line) 
+        { 
+            break; 
+        }
 
         data_length += strlen(cursor);
 
-        if (data_length < alloc_length - 1 || data[data_length - 1] == '\n') { break; }
+        if (data_length < alloc_length - 1 || data[data_length - 1] == '\n') 
+        { 
+            break; 
+        }
 
         size_t new_length = alloc_length << 1;
         data = realloc(data, new_length);
 
-        if (!data) { break; }
+        if (!data) 
+        { 
+            break; 
+        }
 
         alloc_length = new_length;
     }
 
-    if (data[data_length - 1] == '\n') {
+    if (data[data_length - 1] == '\n') 
+    {
         data[data_length - 1] = '\0';
     }
 
@@ -335,15 +399,19 @@ char* readline() {
     return data;
 }
 
-char** split_string(char* str) {
+
+char** split_string(char* str) 
+{
     char** splits = NULL;
     char* token = strtok(str, " ");
 
     int spaces = 0;
 
-    while (token) {
+    while (token) 
+    {
         splits = realloc(splits, sizeof(char*) * ++spaces);
-        if (!splits) {
+        if (!splits) 
+        {
             return splits;
         }
 
