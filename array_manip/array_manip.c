@@ -18,6 +18,7 @@ char* readline();
 char** split_string(char*);
 
 uint64_t tally[TEN_MILLION];
+uint64_t tally_2[TEN_MILLION];
 
 typedef struct linked_range
 {
@@ -25,7 +26,8 @@ typedef struct linked_range
     uint64_t upprange; // upprange is the location of the first index in the array which is not "val"
 } linked_range_t;
 
-linked_range_t linked_range_array[20];
+linked_range_t linked_range_array[TEN_MILLION];
+linked_range_t linked_range_array_2[TEN_MILLION];
 
 // Complete the arrayManipulation function below.
 
@@ -71,7 +73,7 @@ uint64_t arrayManipulation(int n, int operations_rows, int operations_columns, i
 
 void init_linked_range_array(void)
 {
-    linked_range_array[0].upprange = 20;
+    linked_range_array[0].upprange = TEN_MILLION;
 }
 // The operations matrix is an m by 3 matrix
 // This is the linkedList style of solution
@@ -85,7 +87,7 @@ uint64_t arrayManipulationLL(int n, int operations_rows, int operations_columns,
     int lowrange_to_add;
     int upprange_to_add;
     int preexist_upprange;
-    int preexist_val;
+    uint64_t preexist_val;
 
     start_time = clock();
     int ** last_operation_row = &(operations[operations_rows]);
@@ -94,6 +96,7 @@ uint64_t arrayManipulationLL(int n, int operations_rows, int operations_columns,
     for(; operations<last_operation_row; operations++)
     {
         operation_idx++;
+
         op_lowrange = operations[0][0]-1;
         op_upprange = operations[0][1];
         op_add = operations[0][2];
@@ -124,7 +127,7 @@ uint64_t arrayManipulationLL(int n, int operations_rows, int operations_columns,
             preexist_val = linked_range_array[linked_range_idx].val;
 
             linked_range_array[lowrange_to_add].val = preexist_val + op_add;
-            if(preexist_upprange >= upprange_to_add)
+            if(preexist_upprange > upprange_to_add)
             {
                 linked_range_array[linked_range_idx].upprange = lowrange_to_add; // on a second loop, this value is overwritten
                 linked_range_array[lowrange_to_add].upprange = upprange_to_add;
@@ -133,8 +136,25 @@ uint64_t arrayManipulationLL(int n, int operations_rows, int operations_columns,
 
                 break;
             }
+            else if(preexist_upprange == upprange_to_add)
+            {
+                linked_range_array[linked_range_idx].upprange = lowrange_to_add; // on a second loop, this value is overwritten
+                linked_range_array[lowrange_to_add].upprange = upprange_to_add;
+                // And leave the next one untouched
+                break;
+            }
             else
             {
+                if(lowrange_to_add == preexist_upprange)
+                {
+                    printf("Operation idx: %d\n", operation_idx);
+                    printf("linked_range_array[%d].val:%lu .upprange: %ld\n", lowrange_to_add
+                                                                         , linked_range_array[lowrange_to_add].val
+                                                                         , linked_range_array[lowrange_to_add].upprange
+                                                                         );
+                    return 0;
+                }
+                linked_range_array[linked_range_idx].upprange = lowrange_to_add;
                 linked_range_array[lowrange_to_add].upprange = preexist_upprange;
                 lowrange_to_add = preexist_upprange;
                 linked_range_idx = preexist_upprange;
@@ -146,9 +166,64 @@ uint64_t arrayManipulationLL(int n, int operations_rows, int operations_columns,
 
     end_time = clock();
 
+    int linked_range_idx = 0;
+    while(linked_range_idx < TEN_MILLION)
+    {
+        if(linked_range_array[linked_range_idx].val > max)
+        {
+            max = linked_range_array[linked_range_idx].val;
+        }
+        linked_range_idx = linked_range_array[linked_range_idx].upprange;
+    }
     return max;
     // 7515267971
     // 2510535321
+    // 144, for test case 4
+}
+
+void convert_linked_array_to_tally(void)
+{
+    int linked_range_idx = 0;
+    while(linked_range_idx < TEN_MILLION)
+    {
+        int max_fill = linked_range_array[linked_range_idx].upprange;
+        int val_fill = linked_range_array[linked_range_idx].val;
+        for(int fill = linked_range_idx; fill < max_fill; fill++)
+        {
+            tally_2[fill] = val_fill;
+        }
+        linked_range_idx = max_fill;
+    }
+}
+
+void convert_tally_to_linked_array(uint64_t *tally_ptr, linked_range_t *l_range)
+{
+    uint64_t curr_range_val = tally_ptr[0];
+    l_range[0].val = tally_ptr[0];
+
+    int l_range_idx = 0; // start at zero, we don't know how to populate .upprange yet
+    uint64_t temp_tally_val = 0;
+    
+    int tally_idx = 0;
+    for(tally_idx = 1;tally_idx < TEN_MILLION; tally_idx++)
+    {
+        temp_tally_val = tally_ptr[tally_idx];
+        if(curr_range_val != temp_tally_val)
+        {
+            l_range[l_range_idx].val = curr_range_val;
+            l_range[l_range_idx].upprange = tally_idx;
+            l_range_idx = tally_idx;
+            curr_range_val = temp_tally_val;
+        }
+    }
+    l_range[l_range_idx].val = curr_range_val;
+    l_range[l_range_idx].upprange = tally_idx;
+}
+
+void print_cpu_time_used(void)
+{
+    cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;   
+    printf("CPU time used: %lf\n", cpu_time_used);
 }
 
 int main()
@@ -158,7 +233,7 @@ int main()
     int m; // number of operations
 
     /* 1. Open file for Reading */                                                 
-    if (NULL == (fp = fopen("../failing_test_case_4.tsv","r")))                                   
+    if (NULL == (fp = fopen("../failing_test_case.tsv","r")))                                   
     {                                                                           
         perror("Error while opening the file.\n");                              
         exit(EXIT_FAILURE);                                                     
@@ -192,11 +267,38 @@ int main()
 
     init_linked_range_array();
     long result = arrayManipulationLL(n, m, 3, operations);
-    
-    cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
-    
-    printf("%lu %lf\n", result, cpu_time_used);
+    printf("Max value, according to the linked range algo: %ld\n", result);
+    print_cpu_time_used();
+    result = arrayManipulation(n, m, 3, operations);
+    printf("Max value, according to the simple algo: %ld\n", result);
+    print_cpu_time_used();
 
+
+    convert_linked_array_to_tally();
+    convert_tally_to_linked_array(tally, linked_range_array_2);
+
+    // compare tallies
+    int matches = 0;
+    int ranges = 0;
+    int l_range_idx = 0;
+    for(l_range_idx = 0; l_range_idx < n;)
+    {
+        ranges++;
+        if(linked_range_array[l_range_idx].upprange != linked_range_array_2[l_range_idx].upprange)
+        {
+            printf("Ranges are incorrect from idx %d, cannot continue making comparisons\n", l_range_idx);
+            break;
+        }
+        if(linked_range_array[l_range_idx].val      == linked_range_array_2[l_range_idx].val)
+        {
+            matches++;
+        }
+        else {
+            printf("Fail: %lu vs %lu\n", linked_range_array[l_range_idx].val, linked_range_array_2[l_range_idx].val);
+        }
+        l_range_idx = linked_range_array[l_range_idx].upprange;
+    }
+    printf("matches: %d/%d\n", matches, ranges);
 
     return 0;
 }
